@@ -1,0 +1,12 @@
+{
+  "name": "4dExperiment",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "gaussian-elimination-co": "^1.1.0",
+    "typescript": "^4.6.4",
+    "vite": "^2.9.9",
+    "wecu": "^3.2.1"
+  }
+}
