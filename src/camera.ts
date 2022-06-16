@@ -1,15 +1,18 @@
 import { Scene } from './scene'
-import { Vec, Vec4 } from './vector'
+import { add4, Array4, mulScalar4, unit4 } from './typedArray'
 
 const rayLength = 40
 
 class Ray {
-  private direction: Vec4
-  constructor (private scene: Scene, private start: Vec4, direction: Vec4) {
-    this.direction = direction.unit
+  private direction: Array4
+
+  constructor (private scene: Scene, private start: Array4, direction: Array4) {
+    unit4(direction)
+
+    this.direction = direction
   }
 
-  trace(): Vec4 {
+  trace(): Array4 {
     let distanceTraveled = 0
     let workingPoint = this.start
 
@@ -17,7 +20,7 @@ class Ray {
       let [object, distance] = this.scene.getNearestObjectAndDistance(workingPoint)
 
       // exit condition
-      if (distance < 0.03) {
+      if (distance < 0.05) {
         //const opacityLevel = Math.max(Math.min(Math.round(((distanceTraveled + distance) / rayLength)), 0), 1)
 
         // const color = object.color.sub(new Vec4([0, 0, 0, opacityLevel]))
@@ -26,21 +29,24 @@ class Ray {
         return object.color
       } else {
         distanceTraveled += distance
-        workingPoint = workingPoint.add(this.direction.mul(Vec.fromScalar(distance, 4)))
+        const direction = this.direction.slice() as Array4
+
+        mulScalar4(direction, distance)
+        add4(workingPoint, direction)
       }
     }
 
-    return new Vec4([0, 0, 0, 0])
+    return [0, 0, 0, 0] as Array4
   }
 }
 
-function blendColors(bg: Vec4, fg: Vec4) {
-  const r = new Vec4([0, 0, 0, 0])
-  r.w = 1 - (1 - fg.w) * (1 - bg.w)
+function blendColors(bg: Array4, fg: Array4) {
+  const r = [0, 0, 0, 0] as Array4
+  r[3] = 1 - (1 - fg[3]) * (1 - bg[3])
   // if (r.w < 1.0e-6) return r; // Fully transparent -- R,G,B not important
-  r.x = fg.x * fg.w / r.w + bg.x * bg.w * (1 - fg.w) / r.w
-  r.y = fg.y * fg.w / r.w + bg.y * bg.w * (1 - fg.w) / r.w
-  r.z = fg.z * fg.w / r.w + bg.z * bg.w * (1 - fg.w) / r.w
+  r[0] = fg[0] * fg[3] / r[3] + bg[0] * bg[3] * (1 - fg[3]) / r[3]
+  r[1] = fg[1] * fg[3] / r[3] + bg[1] * bg[3] * (1 - fg[3]) / r[3]
+  r[2] = fg[2] * fg[3] / r[3] + bg[2] * bg[3] * (1 - fg[3]) / r[3]
 
   return r
 }
@@ -52,10 +58,10 @@ export class Camera {
                private depth: number,
                private height: number,
                private facing: number,
-               private location: Vec4
+               private location: Array4
   ) {}
 
-  updateLocation(facing: number, location) {
+  updateLocation(facing: number, location: Array4) {
     this.facing = facing
     this.location = location
   }
@@ -65,7 +71,7 @@ export class Camera {
 
     for (let x in rays) {
       for (let y in rays[x]) {
-        let color = new Vec4([255, 255, 255, 1])
+        let color = [255, 255, 255, 1] as Array4
         for (let z in rays[x][y].reverse()) {
           color = blendColors(color, rays[x][y][z].trace())
         }
@@ -77,14 +83,14 @@ export class Camera {
     console.log('done')
   }
 
-  private setPixel(x: number, y: number, color: Vec4) {
+  private setPixel(x: number, y: number, color: Array4) {
     const canvasWidth = this.ctx.canvas.width
     const canvasHeight = this.ctx.canvas.height
 
     const xWidth = canvasWidth / this.width
     const yHeight = canvasHeight / this.height
 
-    this.ctx.fillStyle = `rgba(${color.x}, ${color.y}, ${color.z}, ${color.w})`
+    this.ctx.fillStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3]})`
     this.ctx.fillRect((x / this.width) * canvasWidth, ((this.height - y - 1) / this.height) * canvasHeight, xWidth, yHeight)
   }
 
@@ -110,19 +116,21 @@ export class Camera {
 
 
         for (let k = 0; k < this.depth; ++k) {
-          const startingPosition = this.location.add(new Vec4([
+          const startingPosition = this.location.slice() as Array4
+          add4(startingPosition, [
             (-this.width / 2 + i) * facingC + k * facingS,
             (-this.width / 2 + i) * facingS + k * facingC,
             (-this.height / 2 + j),
             0
-          ]))
+          ] as Array4)
 
-          output[i][j][k] = new Ray(this.scene, startingPosition, new Vec4([
+
+          output[i][j][k] = new Ray(this.scene, startingPosition, [
             y,
             x,
             z,
             1
-          ]))
+          ] as Array4)
         }
       }
     }

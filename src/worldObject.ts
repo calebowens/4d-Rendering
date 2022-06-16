@@ -1,8 +1,8 @@
-import { Vec4 } from './vector'
+import { Array4 } from './typedArray'
 
 export abstract class WorldObject {
-  protected constructor(public color: Vec4) {
+  protected constructor(public color: Array4) {
   }
 
-  abstract distanceTo(point: Vec4): number
+  abstract distanceTo(point: Array4): number
 }

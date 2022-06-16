@@ -1,11 +1,11 @@
 import { WorldObject } from './worldObject'
-import { Vec4 } from './vector'
+import { Array4 } from './typedArray'
 
 export class Scene {
   constructor(public objects: WorldObject[] = []) {
   }
 
-  getNearestObjectAndDistance(point: Vec4): [WorldObject, number] {
+  getNearestObjectAndDistance(point: Array4): [WorldObject, number] {
     let shortestDistance = Infinity
     let nearestObject = this.objects[0]
 
